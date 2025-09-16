@@ -1,66 +1,96 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+**1. Clone Repository** </br>
+Pertama saya membuat folder kerja di dalam direktori Docker </br>
+<i>/d/docker/data/part1</i> </br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
+ 
+lalu clone repository React sederhana dari GitHub. </br>
+<i>git clone https://github.com/aditya-sridhar/simple-reactjs-app.git react-app </br>
+cd react-app</> </i></br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**2. Install Dependencies** </br>
+Setelah repo berhasil di-clone, saya masuk ke folder react-app lalu menginstall semua dependency yang dibutuhkan aplikasi dengan perintah:</br>
+<i>npm install</i> </br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-## About Laravel
+**3. Jalankan Aplikasi Lokal**</br>
+Untuk memastikan aplikasi React berjalan dengan baik sebelum di-build ke Docker, saya jalankan aplikasi secara lokal:</br>
+<i>npm start</i> </br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Jika berhasil, aplikasi bisa diakses melalui browser di alamat: 👉 http://localhost:3000</br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**4. Build React App**</br>
+Selanjutnya saya build aplikasi ke mode production agar siap dijalankan di dalam container.</br>
+<i>npm run build</i></br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**5. Dockerfile**</br>
+Saya membuat file bernama Dockerfile dengan isi sebagai berikut:</br>
 
-## Learning Laravel
+<i># Stage 1: Build </br>
+FROM node:22-alpine AS builder </br>
+WORKDIR /usr/src/app </br>
+COPY package*.json ./ </br>
+RUN npm install </br>
+COPY . . </br>
+RUN npm run build </br>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# Stage 2: Serve </br>
+FROM node:22-alpine </br>
+RUN npm install -g serve </br>
+WORKDIR /usr/src/app </br>
+COPY --from=builder /usr/src/app/build ./build </br>
+EXPOSE 3000 </br>
+CMD ["serve", "-s", "build", "-l", "3000"]</i> </br>
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Penjelasan kode Stage 1: </br>
+- FROM node:22-alpine AS builder : Pakai image Node.js versi 22 Alpine (ringan, cocok untuk build). </br>
+- WORKDIR /usr/src/app : Set working directory di dalam container → semua perintah berikutnya akan dijalankan dari folder ini. </br>
+- COPY package*.json ./: Copy file package.json dan package-lock.json dulu, agar npm install bisa jalan tanpa harus copy semua source code dulu → ini mempercepat build (Docker cache). </br>
+- RUN npm install: Install semua dependencies aplikasi sesuai package.json. </br>
+- COPY . . : Copy semua source code React app ke dalam container.</br>
+- RUN npm run build : Jalankan perintah build React app → hasilnya ada di folder build/.</br>
 
-## Laravel Sponsors
+Penjelasan kode Stage 2 : </br>
+- FROM node:22-alpine : Buat stage baru, lebih bersih (nggak bawa semua node_modules dari stage 1). Pakai image Node.js ringan lagi.</br>
+- RUN npm install -g serve : Install serve secara global → tool untuk serve file React build.</br>
+- WORKDIR /usr/src/app : Set working directory lagi di stage 2.</br>
+- COPY --from=builder /usr/src/app/build ./build : Ambil hanya folder build dari stage pertama (builder). Jadi image final lebih kecil, karena tidak ada source code & node_modules. </br>
+- EXPOSE 3000 : Buka port 3000 agar bisa diakses dari host.</br>
+- CMD ["serve", "-s", "build", "-l", "3000"]\ : Command default saat container jalan → jalankan serve, ambil file di build/, listen di port 3000. </br>
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+Dockerfile ini menggunakan Node.js versi alpine agar lebih ringan, kemudian build React app, dan menjalankannya menggunakan serve di port 3000.</br>
 
-### Premium Partners
+**6. Docker Ignore**
+Untuk mengurangi Size Context Docker Build, saya membuat file .dockerignore: </br>
+<i>node_modules </br>
+build </br>
+npm-debug.log</i> </br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+**7. Build Docker Image** </br>
+Setelah Dockerfile siap, saya build image dengan nama simple-app versi 1.0: </br>
+<i>build -t simple-app:1.0 .</i></br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-## Contributing
+**8. Jalankan Docker Container** </br>
+Terakhir, saya jalankan container dari image yang sudah dibuat dengan mapping port 3000 ke host: </br>
+<i> run -d --name simple-app -p 3000:3000 simple-app:1.0</i></br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Aplikasi React sekarang sudah berjalan di dalam container Docker dan bisa diakses melalui browser di http://localhost:3000. </br>
+<img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Kesimpulan**
+Dengan langkah-langkah di atas, saya berhasil:
+- Menjalankan aplikasi React secara lokal
+- Membuat Dockerfile untuk build React app
+- Build image dengan nama simple-app:1.0
+- Menjalankan container sehingga aplikasi React berjalan di Docker
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
